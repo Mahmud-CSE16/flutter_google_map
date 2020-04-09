@@ -21,15 +21,31 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
+  Set<Marker> _markers = {};
   GoogleMapController _controller;
   String searchAddress;
-
-
   static final CameraPosition myplace = CameraPosition(
-    target: LatLng(22.897245,89.505011),
+    target: LatLng(23.734143,90.392770),
     zoom: 14.4746,
   );
+
+  void getCurrentLocation()async{
+    Position position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    _controller.animateCamera(CameraUpdate.newCameraPosition( CameraPosition(
+      target: LatLng(position.latitude,position.longitude),
+      zoom: 15.0,
+    )));
+
+    setState(() {
+      _markers.add(
+          Marker(
+              markerId: MarkerId('currentlodation'),
+              position: LatLng(position.latitude,position.longitude),
+          )
+      );
+    });
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +55,10 @@ class _MyHomePageState extends State<MyHomePage> {
          GoogleMap(
            //mapType: MapType.normal,
            initialCameraPosition: myplace,
+           markers: _markers,
            onMapCreated: (GoogleMapController controller) {
              _controller = controller;
+             getCurrentLocation();
            },
          ),
          Positioned(
