@@ -24,6 +24,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Set<Marker> _markers = {};
   GoogleMapController _controller;
   String searchAddress;
+  BitmapDescriptor myIcon;
+
+
   static final CameraPosition myplace = CameraPosition(
     target: LatLng(23.734143,90.392770),
     zoom: 14.4746,
@@ -31,6 +34,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void getCurrentLocation()async{
     Position position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    setMarkerAndMoveCamera(position);
+  }
+
+  setMarkerAndMoveCamera(Position position){
     _controller.animateCamera(CameraUpdate.newCameraPosition( CameraPosition(
       target: LatLng(position.latitude,position.longitude),
       zoom: 15.0,
@@ -39,17 +46,29 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _markers.add(
           Marker(
-              markerId: MarkerId('currentlodation'),
-              position: LatLng(position.latitude,position.longitude),
+            markerId: MarkerId('currentlodation'),
+            position: LatLng(position.latitude,position.longitude),
+            icon: myIcon == null? BitmapDescriptor.defaultMarker : myIcon /*BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue)*/,
           )
       );
     });
-
+  }
+  @override
+  void initState() {
+    super.initState();
+    BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(size: Size(10, 10)), 'images/resize_car_marker.png')
+        .then((onValue) {
+      setState(() {
+        myIcon = onValue;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+     resizeToAvoidBottomInset: false,
      body: Stack(
        children: <Widget>[
          GoogleMap(
@@ -61,52 +80,53 @@ class _MyHomePageState extends State<MyHomePage> {
              getCurrentLocation();
            },
          ),
-         Positioned(
-           top: 30.0,
-           right: 15.0,
-           left: 15.0,
-           child: Container(
-             height: 50.0,
-             width: double.infinity,
-             decoration: BoxDecoration(
-               borderRadius: BorderRadius.circular(10.0),
-               color: Colors.white,
-             ),
-             child: Center(
-               child: TextField(
-                 decoration: InputDecoration(
-                   hintText: 'Enter Address',
-                   border: InputBorder.none,
-                   contentPadding: EdgeInsets.only(left: 15.0,top: 15.0),
-                   suffixIcon: IconButton(
-                     icon: Icon(Icons.search),
-                     iconSize: 30.0,
-                     onPressed: () async{
-                       print(searchAddress);
-                       try {
-                         List<Placemark> placemark = await Geolocator().placemarkFromAddress(searchAddress);
-                         Placemark newPlace = placemark[0];
-                         _controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-                           target: LatLng(newPlace.position.latitude,newPlace.position.longitude),
-                           zoom: 15.0,
-                         )));
-                       }catch(e){
-                         print(e);
-                       }
-                     } ,
-                   )
-                 ),
-                 onChanged: (val){
-                   setState(() {
-                     searchAddress = val;
-                   });
-                 },
-               ),
-             ),
-           ),
-         )
+         searchBar(),
        ],
      )
     );
+  }
+
+  Widget searchBar(){
+    return Positioned(
+         top: 30.0,
+         right: 15.0,
+         left: 15.0,
+         child: Container(
+           height: 50.0,
+           width: double.infinity,
+           decoration: BoxDecoration(
+             borderRadius: BorderRadius.circular(10.0),
+             color: Colors.white,
+           ),
+           child: Center(
+             child: TextField(
+               decoration: InputDecoration(
+                 hintText: 'Enter Address',
+                 border: InputBorder.none,
+                 contentPadding: EdgeInsets.only(left: 15.0,top: 15.0),
+                 suffixIcon: IconButton(
+                   icon: Icon(Icons.search),
+                   iconSize: 30.0,
+                   onPressed: () async{
+                     print(searchAddress);
+                     try {
+                       List<Placemark> placemark = await Geolocator().placemarkFromAddress(searchAddress);
+                       Placemark newPlace = placemark[0];
+                       setMarkerAndMoveCamera(newPlace.position);
+                     }catch(e){
+                       print(e);
+                     }
+                   } ,
+                 )
+               ),
+               onChanged: (val){
+                 setState(() {
+                   searchAddress = val;
+                 });
+               },
+             ),
+           ),
+         ),
+       );
   }
 }
