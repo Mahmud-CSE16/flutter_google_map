@@ -9,10 +9,14 @@ In this repo I am taking about
 * Canvas in Flutter
 * Rotate Center Image
 
+# Outputs
+
+
+
 
 ## Procedure
 
-#### Dependencies
+#### Dependencies:
 
 Add dependencies at pubspec.yaml
 ```dart
@@ -26,7 +30,7 @@ Add below lines at AndroidManifest.xml inside application tag
        android:value="Your_Api_Key"/>
 ```
 
-#### Google Map To display
+#### Google Map To display:
 
 Use GoogleMap() Widget
 ```dart
@@ -41,14 +45,14 @@ GoogleMap(
  ),
  ```
 
-#### Get Current Location and Search by Address
+#### Get Current Location and Search by Address:
 For current location and searching address I used Geolocator()
 ```dart
 Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high); //Get Current Location
 Geolocator().placemarkFromAddress(searchAddress); // Get Searched Location
 ```
 
-#### Desing Custom Marker
+#### Desing Custom Marker:
 Here in the marker have info text top of the marker and image center of the marker. we can set rotate value to rotate center image.
 
 * I used Canvas to desing the Marker.
@@ -147,7 +151,7 @@ Future<BitmapDescriptor> getMarkerIcon(String imagePath,String infoText,Color co
 }
 ```
 
-#### Place Custom Marker in Google Map
+#### Place Custom Marker in Google Map:
 
 Marker Icon Type is BitmapDescriptor. So, I converr custiom desing image to BitmapDescriptor
 ```dart
@@ -174,4 +178,4 @@ getCustomMarker(){
 
 ### To more understand please see project code in this repo.
 
-## Thank you
+## Thank you.
