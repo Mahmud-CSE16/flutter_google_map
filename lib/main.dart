@@ -33,40 +33,44 @@ class _MyHomePageState extends State<MyHomePage> {
   String searchAddress;
   BitmapDescriptor myIcon;
 
-
   static final CameraPosition myplace = CameraPosition(
-    target: LatLng(23.734143,90.392770),
+    target: LatLng(23.734143, 90.392770),
     zoom: 14.4746,
   );
 
-  void getCurrentLocation()async{
-    Position position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    setMarkerAndMoveCamera(position);
+  void getCurrentLocation() async {
+    print('position:');
+    Future.delayed(Duration(seconds: 5), () async {
+      List<Placemark> placemark =
+          await Geolocator().placemarkFromAddress('dhaka');
+      Placemark newPlace = placemark[0];
+      setMarkerAndMoveCamera(newPlace.position);
+    });
+    /*Position position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    print(position);
+    setMarkerAndMoveCamera(position);*/
   }
 
-  setMarkerAndMoveCamera(Position position){
-    _controller.animateCamera(CameraUpdate.newCameraPosition( CameraPosition(
-      target: LatLng(position.latitude,position.longitude),
+  setMarkerAndMoveCamera(Position position) {
+    _controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+      target: LatLng(position.latitude, position.longitude),
       zoom: 15.0,
     )));
 
     setState(() {
-      _markers.add(
-          Marker(
-            rotation: 0,
-            infoWindow: InfoWindow(
-              title: 'dhaka',
-            ),
-            markerId: MarkerId('currentlodation'),
-            position: LatLng(position.latitude,position.longitude),
-            icon: myIcon == null? BitmapDescriptor.defaultMarker : myIcon /*BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue)*/,
-          )
-      );
+      _markers.add(Marker(
+        markerId: MarkerId('currentlodation'),
+        position: LatLng(position.latitude, position.longitude),
+        icon: myIcon == null
+            ? BitmapDescriptor.defaultMarker
+            : myIcon /*BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue)*/,
+      ));
     });
   }
 
-  getCustomMarker(){
-    getMarkerIcon('images/bike.png','Bike(0 kph)',Colors.indigo,0.0).then((value){
+  getCustomMarker() {
+    getMarkerIcon('images/bike.png', 'Md Mahmudul Islam', Colors.indigo, 90.0)
+        .then((value) {
       setState(() {
         myIcon = value;
       });
@@ -90,164 +94,292 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-       resizeToAvoidBottomInset: false,
-       body: Stack(
-         children: <Widget>[
-           GoogleMap(
-             //mapType: MapType.satellite,
-             initialCameraPosition: myplace,
-             markers: _markers,
-             onMapCreated: (GoogleMapController controller) {
-               _controller = controller;
-               getCurrentLocation();
-             },
-           ),
-           searchBar(),
-         ],
-       )
-      ),
+          resizeToAvoidBottomInset: false,
+          body: Stack(
+            children: <Widget>[
+              GoogleMap(
+                //mapType: MapType.satellite,
+                initialCameraPosition: myplace,
+                markers: _markers,
+                onMapCreated: (GoogleMapController controller) {
+                  _controller = controller;
+                  getCurrentLocation();
+                },
+              ),
+              searchBar(),
+            ],
+          )),
     );
   }
 
-  Widget searchBar(){
+  Widget searchBar() {
     return Positioned(
-         top: 30.0,
-         right: 15.0,
-         left: 15.0,
-         child: Container(
-           height: 50.0,
-           width: double.infinity,
-           decoration: BoxDecoration(
-             borderRadius: BorderRadius.circular(10.0),
-             color: Colors.white,
-           ),
-           child: Center(
-             child: TextField(
-               decoration: InputDecoration(
-                 hintText: 'Enter Address',
-                 border: InputBorder.none,
-                 contentPadding: EdgeInsets.only(left: 15.0,top: 15.0),
-                 suffixIcon: IconButton(
-                   icon: Icon(Icons.search),
-                   iconSize: 30.0,
-                   onPressed: () async{
-                     print(searchAddress);
-                     try {
-                       List<Placemark> placemark = await Geolocator().placemarkFromAddress(searchAddress);
-                       Placemark newPlace = placemark[0];
-                       setMarkerAndMoveCamera(newPlace.position);
-                     }catch(e){
-                       print(e);
-                     }
-                   } ,
-                 )
-               ),
-               onChanged: (val){
-                 setState(() {
-                   searchAddress = val;
-                 });
-               },
-             ),
-           ),
-         ),
-       );
+      top: 30.0,
+      right: 15.0,
+      left: 15.0,
+      child: Container(
+        height: 50.0,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10.0),
+          color: Colors.white,
+        ),
+        child: Center(
+          child: TextField(
+            decoration: InputDecoration(
+                hintText: 'Enter Address',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.only(left: 15.0, top: 15.0),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.search),
+                  iconSize: 30.0,
+                  onPressed: () async {
+                    print(searchAddress);
+                    try {
+                      List<Placemark> placemark = await Geolocator()
+                          .placemarkFromAddress(searchAddress);
+                      Placemark newPlace = placemark[0];
+                      setMarkerAndMoveCamera(newPlace.position);
+                    } catch (e) {
+                      print(e);
+                    }
+                  },
+                )),
+            onChanged: (val) {
+              setState(() {
+                searchAddress = val;
+              });
+            },
+          ),
+        ),
+      ),
+    );
   }
 }
 
-
-
-Future<BitmapDescriptor> getMarkerIcon(String imagePath,String infoText,Color color,double rotateDegree) async {
+Future<BitmapDescriptor> getMarkerIcon(
+    String imagePath, String infoText, Color color, double rotateDegree) async {
   final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
 
   //size
-  Size canvasSize = Size(500.0,220.0);
-  Size markerSize = Size(150.0,150.0);
+  Size canvasSize = Size(600.0, 290.0);
+  Size markerSize = Size(150.0, 150.0);
 
   // Add info text
-  TextPainter textPainter = TextPainter(textDirection: TextDirection.ltr);
-  textPainter.text = TextSpan(
+  TextPainter infoTextPainter = TextPainter(textDirection: TextDirection.ltr);
+  infoTextPainter.text = TextSpan(
     text: infoText,
-    style: TextStyle(fontSize: 30.0,fontWeight: FontWeight.w600, color: color),
+    style: TextStyle(fontSize: 33.0, fontWeight: FontWeight.w600, color: color),
   );
-  textPainter.layout();
+  infoTextPainter.layout();
+
+  //Add left info text
+  TextPainter leftInfoTextPainter =
+      TextPainter(textDirection: TextDirection.ltr);
+  leftInfoTextPainter.text = TextSpan(children: [
+    TextSpan(
+      text: '56.5',
+      style: TextStyle(
+        fontSize: 30.0,
+        fontWeight: FontWeight.w600,
+        color: color,
+      ),
+    ),
+    TextSpan(
+      text: '\nkm/h',
+      style: TextStyle(
+        fontSize: 25.0,
+        fontWeight: FontWeight.w600,
+        color: color,
+      ),
+    )
+  ]);
+  leftInfoTextPainter.layout();
+
+  final double infoHeight = 100.0;
+  final leftInfoWidth = 90;
+  final double infoBorder = 20;
+  final gapBetweenInfoAndMarker = 40.0;
+  final double strokeWidth = 2.0;
 
   final Paint infoPaint = Paint()..color = Colors.white;
+  final Paint leftInfoStrokePaint = Paint()
+    ..color = color
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 3.0;
+  final Paint infoShadowPaint = Paint()
+    ..color = Colors.black.withOpacity(.5)
+    ..maskFilter =
+        MaskFilter.blur(BlurStyle.normal, gapBetweenInfoAndMarker / 4);
   final Paint infoStrokePaint = Paint()..color = color;
-  final double infoHeight = 70.0;
-  final double strokeWidth = 2.0;
 
   final Paint markerPaint = Paint()..color = color.withOpacity(.5);
   final double shadowWidth = 30.0;
 
-  final Paint borderPaint = Paint()..color = color..strokeWidth=2.0..style = PaintingStyle.stroke;
+  final Paint borderPaint = Paint()
+    ..color = color
+    ..strokeWidth = 2.0
+    ..style = PaintingStyle.stroke;
 
-  final double imageOffset = shadowWidth*.5;
+  final double imageOffset = shadowWidth * .5;
 
-  canvas.translate(canvasSize.width/2, canvasSize.height/2+infoHeight/2);
+  canvas.translate(canvasSize.width / 2,
+      canvasSize.height / 2 + infoHeight / 2 + gapBetweenInfoAndMarker / 2);
 
   // Add shadow circle
-  canvas.drawOval(Rect.fromLTWH(-markerSize.width/2, -markerSize.height/2, markerSize.width, markerSize.height), markerPaint);
+  canvas.drawOval(
+      Rect.fromLTWH(-markerSize.width / 2, -markerSize.height / 2,
+          markerSize.width, markerSize.height),
+      markerPaint);
   // Add border circle
-  canvas.drawOval(Rect.fromLTWH(-markerSize.width/2+shadowWidth, -markerSize.height/2+shadowWidth, markerSize.width-2*shadowWidth, markerSize.height-2*shadowWidth), borderPaint);
+  canvas.drawOval(
+      Rect.fromLTWH(
+          -markerSize.width / 2 + shadowWidth,
+          -markerSize.height / 2 + shadowWidth,
+          markerSize.width - 2 * shadowWidth,
+          markerSize.height - 2 * shadowWidth),
+      borderPaint);
 
-  // Oval for the image
-  Rect oval = Rect.fromLTWH(-markerSize.width/2+.5* shadowWidth, -markerSize.height/2+.5*shadowWidth, markerSize.width-shadowWidth, markerSize.height-shadowWidth);
+  // Oval for middle image
+  Rect rectMiddle = Rect.fromLTWH(
+      -markerSize.width / 2 + .5 * shadowWidth,
+      -markerSize.height / 2 + .5 * shadowWidth,
+      markerSize.width - shadowWidth,
+      markerSize.height - shadowWidth);
 
   //save canvas before rotate
   canvas.save();
 
-  double rotateRadian = (pi/180.0)*rotateDegree;
+  double rotateRadian = (pi / 180.0) * rotateDegree;
 
   //Rotate Image
   canvas.rotate(rotateRadian);
 
-  // Add path for oval image
+  /*  // Add path for middle image
   canvas.clipPath(Path()
-    ..addOval(oval));
+    ..addRect(rectMiddle)); */
 
   // Add image
   ui.Image image = await getImageFromPath(imagePath);
-  paintImage(canvas: canvas,image: image, rect: oval, fit: BoxFit.fitHeight);
+  paintImage(
+      canvas: canvas, image: image, rect: rectMiddle, fit: BoxFit.fitHeight);
 
   canvas.restore();
 
-  // Add info box stroke
-  canvas.drawPath(Path()..addRRect(RRect.fromLTRBR(-textPainter.width/2-infoHeight/2, -canvasSize.height/2-infoHeight/2+1, textPainter.width/2+infoHeight/2, -canvasSize.height/2+infoHeight/2+1,Radius.circular(35.0)))
-      ..moveTo(-15, -canvasSize.height/2+infoHeight/2+1)
-      ..lineTo(0, -canvasSize.height/2+infoHeight/2+25)
-      ..lineTo(15, -canvasSize.height/2+infoHeight/2+1)
-      , infoStrokePaint);
+  //shadow
+  canvas.drawRRect(
+      RRect.fromLTRBR(
+          -infoTextPainter.width / 2 - leftInfoWidth / 2 - infoBorder / 2,
+          -canvasSize.height / 2 - infoHeight / 2 / 4 + 1,
+          infoTextPainter.width / 2 + leftInfoWidth / 2 + infoBorder / 2,
+          -canvasSize.height / 2 + infoHeight / 2 + 1,
+          Radius.circular(15.0)),
+      infoShadowPaint);
+  // Add info box
+  canvas.drawRRect(
+      RRect.fromLTRBR(
+          -infoTextPainter.width / 2 - leftInfoWidth / 2 - infoBorder,
+          -canvasSize.height / 2 -
+              infoHeight / 2 -
+              gapBetweenInfoAndMarker / 2 +
+              1,
+          infoTextPainter.width / 2 + leftInfoWidth / 2 + infoBorder,
+          -canvasSize.height / 2 + infoHeight / 2 + 1,
+          Radius.circular(15.0)),
+      infoPaint);
+  //left info box
+  canvas.drawRRect(
+      RRect.fromLTRBR(
+          infoTextPainter.width / 2 - leftInfoWidth / 2 + infoBorder / 2,
+          -canvasSize.height / 2 -
+              infoHeight / 2 -
+              gapBetweenInfoAndMarker / 2 +
+              1 +
+              infoBorder,
+          infoTextPainter.width / 2 + leftInfoWidth / 2,
+          -canvasSize.height / 2 + infoHeight / 2 + 1 - infoBorder,
+          Radius.circular(15.0)),
+      leftInfoStrokePaint);
 
-  //info info box
-  canvas.drawPath(Path()..addRRect(RRect.fromLTRBR(-textPainter.width/2-infoHeight/2+strokeWidth, -canvasSize.height/2-infoHeight/2+1+strokeWidth, textPainter.width/2+infoHeight/2-strokeWidth, -canvasSize.height/2+infoHeight/2+1-strokeWidth,Radius.circular(32.0)))
-    ..moveTo(-15+strokeWidth/2, -canvasSize.height/2+infoHeight/2+1-strokeWidth)
-    ..lineTo(0, -canvasSize.height/2+infoHeight/2+25-strokeWidth*2)
-    ..lineTo(15-strokeWidth/2, -canvasSize.height/2+infoHeight/2+1-strokeWidth)
-      , infoPaint);
-  textPainter.paint(
+  //info text paint
+  infoTextPainter.paint(
       canvas,
       Offset(
-          - textPainter.width / 2,
-          -canvasSize.height/2-infoHeight/2+infoHeight / 2 - textPainter.height / 2
-      )
-  );
+          -infoTextPainter.width / 2 - leftInfoWidth / 2,
+          -canvasSize.height / 2 -
+              gapBetweenInfoAndMarker / 2 -
+              infoHeight / 2 +
+              infoBorder));
+
+  //left info text paint
+  leftInfoTextPainter.paint(
+      canvas,
+      Offset(
+          infoTextPainter.width / 2 - leftInfoWidth / 2 + infoBorder,
+          -canvasSize.height / 2 -
+              gapBetweenInfoAndMarker / 2 -
+              leftInfoTextPainter.height / 2 +
+              infoBorder / 2));
+
+  //rectForMotorImage
+  Rect rectForMotorImage = Rect.fromLTWH(-150, -canvasSize.height / 2, 40, 40);
+
+  /* // Add path for Motor image
+  canvas.clipPath(Path()
+    ..addRect(rectForMotorImage)); */
+
+  // Add motor image
+  ui.Image motorImage = await getImageFromPath('images/motor_.png');
+  paintImage(
+      canvas: canvas,
+      image: motorImage,
+      rect: rectForMotorImage,
+      fit: BoxFit.fitWidth);
+
+  //rectForGPSImage
+  Rect rectForGPSImage = Rect.fromLTWH(-50, -canvasSize.height / 2, 40, 40);
+
+  /* // Add path for Motor image
+  canvas.clipPath(Path()..addRect(rectForGPSImage));
+ */
+  // Add gps image
+  ui.Image gpsImage = await getImageFromPath('images/gps.png');
+  paintImage(
+      canvas: canvas,
+      image: gpsImage,
+      rect: rectForGPSImage,
+      fit: BoxFit.fitHeight);
+
+  //rectForWifiImage
+  Rect rectForWifiImage = Rect.fromLTWH(50, -canvasSize.height / 2, 40, 40);
+
+  /*  // Add path for wifi image
+  canvas.clipPath(Path()
+    ..addRect(rectForWifiImage)); */
+
+  // Add wifi image
+  ui.Image wifiImage = await getImageFromPath('images/wifi_.png');
+  paintImage(
+      canvas: canvas,
+      image: wifiImage,
+      rect: rectForWifiImage,
+      fit: BoxFit.fitWidth);
 
   canvas.restore();
 
   // Convert canvas to image
-  final ui.Image markerAsImage = await pictureRecorder.endRecording().toImage(
-      canvasSize.width.toInt(),
-      canvasSize.height.toInt()
-  );
+  final ui.Image markerAsImage = await pictureRecorder
+      .endRecording()
+      .toImage(canvasSize.width.toInt(), canvasSize.height.toInt());
 
   // Convert image to bytes
-  final ByteData byteData = await markerAsImage.toByteData(format: ui.ImageByteFormat.png);
+  final ByteData byteData =
+      await markerAsImage.toByteData(format: ui.ImageByteFormat.png);
   final Uint8List uint8List = byteData.buffer.asUint8List();
 
   return BitmapDescriptor.fromBytes(uint8List);
 }
-
 
 Future<ui.Image> getImageFromPath(String imagePath) async {
   //File imageFile = File(imagePath);
